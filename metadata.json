@@ -1,0 +1,8 @@
+{
+  "name": "Oryn Server – Editors Tournament",
+  "description": "A premium tournament platform for video editors featuring real-time voting, gift packages, and an AE-inspired cyber-neon aesthetic.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
