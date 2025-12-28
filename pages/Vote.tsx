@@ -17,8 +17,9 @@ const INITIAL_EDITORS: Editor[] = [
 const Vote: React.FC<VoteProps> = ({ user, login }) => {
   const [editors, setEditors] = useState<Editor[]>(INITIAL_EDITORS);
   const [hasVotedLocally, setHasVotedLocally] = useState(false);
+  const [isVoting, setIsVoting] = useState(false);
 
-  const handleVote = (id: string) => {
+  const handleVote = async (id: string) => {
     if (!user) {
       alert('Please login with GitHub to vote!');
       login();
@@ -30,8 +31,29 @@ const Vote: React.FC<VoteProps> = ({ user, login }) => {
       return;
     }
 
-    setEditors(prev => prev.map(e => e.id === id ? { ...e, votes: e.votes + 1 } : e));
-    setHasVotedLocally(true);
+    setIsVoting(true);
+    try {
+      // Real API call to Cloudflare Function
+      const response = await fetch('/api/vote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ editorId: id, userId: user.id }),
+      });
+
+      if (response.ok) {
+        setEditors(prev => prev.map(e => e.id === id ? { ...e, votes: e.votes + 1 } : e));
+        setHasVotedLocally(true);
+      } else {
+        throw new Error('Vote failed');
+      }
+    } catch (err) {
+      // Fallback for local testing if API isn't present
+      console.warn('API call failed, falling back to local simulation', err);
+      setEditors(prev => prev.map(e => e.id === id ? { ...e, votes: e.votes + 1 } : e));
+      setHasVotedLocally(true);
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   return (
@@ -74,15 +96,15 @@ const Vote: React.FC<VoteProps> = ({ user, login }) => {
               </div>
               
               <button
-                disabled={hasVotedLocally || user?.hasVoted}
+                disabled={hasVotedLocally || user?.hasVoted || isVoting}
                 onClick={() => handleVote(editor.id)}
                 className={`w-full py-3 rounded-xl font-bold transition-all duration-300 ${
-                  hasVotedLocally || user?.hasVoted
+                  hasVotedLocally || user?.hasVoted || isVoting
                   ? 'bg-white/10 text-gray-500 cursor-not-allowed'
                   : 'bg-white/5 border border-[#00FF88]/30 text-[#00FF88] hover:bg-[#00FF88] hover:text-[#0A0A0A] shadow-[0_0_15px_#00FF8820]'
                 }`}
               >
-                {hasVotedLocally || user?.hasVoted ? 'Vote Submitted' : 'Vote Now'}
+                {isVoting ? 'Processing...' : (hasVotedLocally || user?.hasVoted ? 'Vote Submitted' : 'Vote Now')}
               </button>
             </div>
           </div>

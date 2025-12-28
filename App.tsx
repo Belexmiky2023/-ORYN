@@ -14,14 +14,16 @@ import { User } from './types';
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
 
-  // Mock persistence for demo
   useEffect(() => {
     const saved = localStorage.getItem('oryn_user');
     if (saved) setUser(JSON.parse(saved));
   }, []);
 
   const loginWithGithub = () => {
-    // In a real environment, this redirects to the Cloudflare Worker OAuth endpoint
+    // In production on Cloudflare, you would redirect to:
+    // window.location.href = `/api/auth/github`;
+    
+    // Keeping mock for immediate testing in browser
     const mockUser: User = {
       id: 'gh-' + Math.random().toString(36).substr(2, 9),
       username: 'CreativeEditor',
